@@ -1,0 +1,416 @@
+
+        /* Reset & Base Styles */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Consolas', monospace;
+            background-color: #f5f5f5;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Layout & Structure */
+        .editor-container {
+            max-width: 1000px;
+            padding: 2%;
+            margin: 0 auto;
+            position: relative;
+            padding-top: 1rem;
+        }
+
+        .bottom {
+            text-align: center;
+            padding: 2rem;
+            margin-top: 2rem;
+            margin-bottom: 100px;
+            color: #586e75;
+        }
+
+        /* Typography */
+        .editor-container h3 {
+            margin-top: 0;
+            color: #002b36;
+            font-size: 1rem;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2aa198;
+            transition: color 0.2s ease;
+        }
+
+        .subtitle {
+            color: #93a1a1;
+            font-size: 14px;
+        }
+
+        /* Navigation & Header */
+        .banner {
+            background-color: #002b36;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .banner-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .banner-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Logo Component */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .logo:hover {
+            opacity: 0.9;
+        }
+
+        .logo img {
+            height: 32px;
+            width: 32px;
+            object-fit: contain;
+        }
+
+        .logo:hover .logo-text {
+            color: #3eb8af;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: #93a1a1;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 4px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        /* Editor Styles */
+        .CodeMirror {
+            height: 600px;
+            border: 3px solid #0a3a4a;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: 'Consolas', monospace;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .CodeMirror.has-errors {
+            border-color: rgba(231, 76, 60, 0.8);
+            box-shadow: 0 2px 12px rgba(231, 76, 60, 0.15);
+        }
+
+        .CodeMirror.has-warnings {
+            border-color: rgba(241, 196, 15, 0.8);
+            box-shadow: 0 2px 12px rgba(241, 196, 15, 0.15);
+        }
+
+        .CodeMirror.is-valid {
+            border-color: rgba(39, 174, 96, 0.8);
+            box-shadow: 0 2px 12px rgba(39, 174, 96, 0.15);
+        }
+
+        body.dark-theme .CodeMirror {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        body.dark-theme .CodeMirror.has-errors {
+            box-shadow: 0 2px 12px rgba(231, 76, 60, 0.2);
+        }
+
+        body.dark-theme .CodeMirror.has-warnings {
+            box-shadow: 0 2px 12px rgba(241, 196, 15, 0.2);
+        }
+
+        body.dark-theme .CodeMirror.is-valid {
+            box-shadow: 0 2px 12px rgba(39, 174, 96, 0.2);
+        }
+
+        /* Gherkin Syntax Highlighting */
+        .cm-keyword { color: #b58900 !important; }
+        .cm-variable { color: #859900 !important; }
+        .cm-string { color: #2aa198 !important; }
+        .cm-comment { color: #586e75 !important; }
+        .CodeMirror-linenumber { color: #586e75 !important; }
+        .cm-tab { background-color: rgba(255,255,255,0.1); }
+
+        /* Button Container & Actions */
+        .button-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(215, 225, 229, 0.95);
+            padding: 1rem;
+            border-radius: 10px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .action-button {
+            padding: 8px 16px;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .action-button::after {
+            content: attr(data-shortcut);
+            margin-left: 4px;
+        }
+
+        /* Button Variants */
+        .format-button {
+            background-color: #056d31;
+        }
+
+        .format-button:hover {
+            background-color: #27ae60;
+            transform: translateY(-1px);
+        }
+
+        .format-button:active {
+            background-color: #219a52;
+            transform: translateY(1px);
+        }
+
+        .copy-button {
+            background-color: #082830;
+        }
+
+        .copy-button:hover {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+        }
+
+        .copy-button:active {
+            background-color: #2472a4;
+            transform: translateY(1px);
+        }
+
+        .copy-button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .clear-button {
+            background-color: #082830;
+        }
+
+        .clear-button:hover {
+            background-color: #c0392b;
+            transform: translateY(-1px);
+        }
+
+        .clear-button:active {
+            background-color: #a93226;
+            transform: translateY(1px);
+        }
+
+        /* Tooltip Component */
+        .tooltip {
+            position: absolute;
+            left: 50%;
+            bottom: 100%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+            white-space: nowrap;
+            margin-bottom: 8px;
+            z-index: 1001;
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 4px;
+            border-style: solid;
+            border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+        }
+
+        .tooltip.show {
+            opacity: 1;
+        }
+
+        /* Footer Styles */
+        .bottom p {
+            margin: 0.5rem 0;
+            font-size: 14px;
+        }
+
+        .bottom a {
+            color: #2aa198;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .bottom a:hover {
+            color: #268bd2;
+        }
+
+        .bottom .love-emoji {
+            color: #dc322f;
+            display: inline-block;
+            transform: scale(1);
+            transition: transform 0.3s ease;
+        }
+
+        .bottom a:hover .love-emoji {
+            transform: scale(1.2);
+        }
+
+        .bottom .copyright {
+            margin-top: 1rem;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        /* Shortcuts Component */
+        .shortcuts {
+            margin-top: 10px;
+            color: #93a1a1;
+            font-size: 12px;
+            border: 1px solid #082830;
+            border-radius: 1rem;
+        }
+
+        .shortcuts h2 {
+            font-size: 1rem;
+        }
+
+        .bottom .shortcuts {
+            margin-bottom: 2rem;
+        }
+
+        .bottom .shortcuts ul {
+            list-style: none;
+            padding: 0;
+            margin: 0.5rem auto;
+            max-width: 500px;
+            text-align: left;
+        }
+
+        .bottom .shortcuts li {
+            font-size: medium;
+            margin: 0.1rem 0;
+            padding: 0 1rem;
+        }
+
+        /* Dark Theme Styles */
+        body.dark-theme {
+            background-color: #002b36;
+        }
+
+        body.dark-theme .editor-container h3 {
+            color: #93a1a1;
+        }
+
+        body.dark-theme .shortcuts {
+            color: #586e75;
+        }
+
+        body.dark-theme .button-container {
+            background: rgba(0, 43, 54, 0.95);
+        }
+
+        body.dark-theme .bottom {
+            color: #93a1a1;
+        }
+
+        body.dark-theme .bottom a {
+            color: #2aa198;
+        }
+
+        body.dark-theme .bottom a:hover {
+            color: #268bd2;
+        }
+
+        /* Responsive/Mobile Styles */
+        @media (max-width: 600px) {
+            .banner {
+                padding: 0.7rem 1rem;
+            }
+
+            .banner-left {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .logo {
+                flex-direction: row;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .logo img {
+                height: 24px;
+                width: 24px;
+            }
+
+            .logo-text {
+                font-size: 18px;
+            }
+
+            .subtitle {
+                font-size: 12px;
+                opacity: 0.8;
+            }
+
+            .action-button {
+                font-size: 13px;
+                padding: 8px 12px;
+                min-width: 0;
+            }
+
+            .action-button::after {
+                content: none; /* Hide the shortcut text */
+            }
+
+            .button-container {
+                flex-direction: row;
+                gap: 8px;
+                align-items: center;
+                padding: 0.7rem;
+            }
+        }
