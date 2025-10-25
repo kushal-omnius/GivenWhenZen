@@ -80,7 +80,7 @@
     <div class="button-container">
         <button onclick="formatEditor()" class="action-button format-button" data-shortcut="(Ctrl+Shift+F)">Format</button>
         <button onclick="clearEditor()" class="action-button clear-button" data-shortcut="(Ctrl+D)">Clear</button>
-        <button onclick="copyToClipboard()" class="action-button copy-button" data-shortcut="(Ctrl+Shift+C)" disabled>Copy</button>
+        <button onclick="copyToClipboard()" class="action-button copy-button" disabled>Copy to clipboard</button>
     </div>
     <div class="bottom">
         <div class="shortcuts">
@@ -88,7 +88,6 @@
             <ul>
                 <li>Format: Ctrl+Shift+F (Windows) / Cmd+Shift+F (Mac)</li>
                 <li>Clear: Ctrl+D (Windows) / Cmd+D (Mac)</li>
-                <li>Copy: Ctrl+Shift+C (Windows) / Cmd+Shift+C (Mac)</li>
             </ul>
         </div>
         <p>
@@ -504,13 +503,21 @@
         let isFormatted = false;
 
         // Function to format the editor content
-        function formatEditor() {
+        function formatEditor(e) {
+            // Prevent default browser behavior if called from keyboard shortcut
+            if (e && e.preventDefault) {
+                e.preventDefault();
+            }
+            
             const formatted = formatGherkin(editor.getValue());
             editor.setValue(formatted);
             isFormatted = true;
             updateCopyButtons(true);
             const formatButton = document.querySelector('.format-button');
             showTooltip(formatButton, 'Code formatted!');
+            
+            // Return false to prevent default browser behavior
+            return false;
         }
 
         // Function to clear the editor content
@@ -631,14 +638,12 @@
                     }
                 },
                 // Format shortcuts
-                "Ctrl-Shift-F": function(cm) {  // Windows
-                    const formatted = formatGherkin(cm.getValue());
-                    editor.setValue(formatted);
+                "Shift-Ctrl-F": function(cm) {  // Windows
+                    formatEditor();
                     return false;  // Prevent default browser find
                 },
-                "Cmd-Shift-F": function(cm) {   // Mac
-                    const formatted = formatGherkin(cm.getValue());
-                    editor.setValue(formatted);
+                "Shift-Cmd-F": function(cm) {   // Mac
+                    formatEditor();
                     return false;  // Prevent default browser find
                 },
                 // Clear shortcuts
@@ -650,17 +655,7 @@
                     cm.setValue("");
                     return false;
                 },
-                // Copy shortcuts
-                "Ctrl-Shift-C": function(cm) {  // Windows
-                    if (!cm.getValue() || cm.getValue().trim() === "") return;
-                    copyToClipboard();
-                    return false;
-                },
-                "Cmd-Shift-C": function(cm) {   // Mac
-                    if (!cm.getValue() || cm.getValue().trim() === "") return;
-                    copyToClipboard();
-                    return false;
-                }
+                // No copy shortcuts - removed
             },
             // Add change handler to detect user edits
             onChange: function(cm) {
