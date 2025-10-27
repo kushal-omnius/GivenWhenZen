@@ -9,6 +9,7 @@
     <meta property="og:title" content="GivenWhenZen - Online Gherkin Editor & Validator">
     <meta property="og:description" content="Free online Gherkin editor for BDD practitioners. Format, validate, and lint your feature files in real-time.">
     <meta property="og:type" content="website">
+    <meta property="og:image" content="https://givenwhenzen.kushalbhalaik.xyz/favicon.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="GivenWhenZen - Gherkin Editor & BDD Tool">
     <meta name="twitter:description" content="Free online Gherkin editor for Cucumber, JBehave, and SpecFlow. Perfect for BDD practitioners.">
@@ -274,6 +275,7 @@
             let inScenario = false;
             let lastStepType = null;
             let hasBackground = false;
+            let inFeatureDescription = false;
 
             // Table block tracking for column count validation
             let tableBlocks = [];
@@ -320,6 +322,78 @@
 
             lines.forEach((line, i) => {
                 const trimmedLine = line.trim();
+
+                // Detect start/end of feature description block
+                if (trimmedLine.startsWith('Feature:')) {
+                    inFeatureDescription = true;
+                } else if (inFeatureDescription && (trimmedLine.match(/^(@|Background:|Scenario:|Scenario Outline:|Given|When|Then|And|But|\*|Examples:)/) || !trimmedLine)) {
+                    inFeatureDescription = false;
+                }
+
+                // Reserved Gherkin keywords
+                const reservedKeywords = [
+                    'Feature', 'Background', 'Scenario', 'Scenario Outline',
+                    'Given', 'When', 'Then', 'And', 'But', '*', 'Examples'
+                ];
+                // Check for typos in tags and first word of other lines, for all lines except feature description
+                if (!inFeatureDescription) {
+                    if (trimmedLine.startsWith('@')) {
+                        // Check each tag
+                        const tags = trimmedLine.split(/\s+/);
+                        tags.forEach(tag => {
+                            // Remove leading @
+                            const tagWord = tag.replace(/^@/, '');
+                            // Only check if tagWord contains letters
+                            if (/^[A-Za-z*]+$/.test(tagWord)) {
+                                if (!reservedKeywords.includes(tagWord)) {
+                                    let closest = null;
+                                    let minDist = Infinity;
+                                    reservedKeywords.forEach(kw => {
+                                        const dist = levenshtein(tagWord.toLowerCase(), kw.toLowerCase());
+                                        if (dist < minDist) {
+                                            minDist = dist;
+                                            closest = kw;
+                                        }
+                                    });
+                                    if (minDist > 0 && minDist <= 2) {
+                                        found.push({
+                                            from: CodeMirror.Pos(i, trimmedLine.indexOf(tag)),
+                                            to: CodeMirror.Pos(i, trimmedLine.indexOf(tag) + tag.length),
+                                            message: `Possible typo in tag: '${tag}' (did you mean '@${closest}'?)`,
+                                            severity: "error"
+                                        });
+                                    }
+                                }
+                            }
+                        });
+                    } else {
+                        // Check first word of other lines
+                        const firstWordMatch = trimmedLine.match(/^([A-Za-z*]+)(:|\s)/);
+                        if (firstWordMatch) {
+                            const firstWord = firstWordMatch[1];
+                            if (!reservedKeywords.includes(firstWord)) {
+                                let closest = null;
+                                let minDist = Infinity;
+                                reservedKeywords.forEach(kw => {
+                                    const dist = levenshtein(firstWord.toLowerCase(), kw.toLowerCase());
+                                    if (dist < minDist) {
+                                        minDist = dist;
+                                        closest = kw;
+                                    }
+                                });
+                                if (minDist > 0 && minDist <= 2) {
+                                    found.push({
+                                        from: CodeMirror.Pos(i, 0),
+                                        to: CodeMirror.Pos(i, line.length),
+                                        message: `Possible typo: '${firstWord}' (did you mean '${closest}'?)`,
+                                        severity: "error"
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Track docstring state
                 if (!lines._inDocString) lines._inDocString = false;
                 if (trimmedLine.startsWith('"""')) {
@@ -498,6 +572,33 @@
                 return INDENT_CONFIG.EXAMPLES;
             }
             return INDENT_CONFIG.NONE;
+        }
+
+        // Levenshtein distance helper
+        function levenshtein(a, b) {
+            const matrix = [];
+            let i;
+            for (i = 0; i <= b.length; i++) {
+                matrix[i] = [i];
+            }
+            let j;
+            for (j = 0; j <= a.length; j++) {
+                matrix[0][j] = j;
+            }
+            for (i = 1; i <= b.length; i++) {
+                for (j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j] + 1
+                        );
+                    }
+                }
+            }
+            return matrix[b.length][a.length];
         }
 
         let isFormatted = false;
