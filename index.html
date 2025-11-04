@@ -19,6 +19,21 @@
     <meta name="robots" content="index, follow">
     <meta name="language" content="English">
     <link rel="alternate" hreflang="en" href="https://givenwhenzen.kushalbhalaik.xyz">
+
+    <!-- Google Adsense -->
+    <script data-ad-client="ca-pub-1533259080190708" async
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+
+            (adsbygoogle = window.adsbygoogle || []).push({
+
+                google_ad_client: "ca-pub-1533259080190708",
+
+                enable_page_level_ads: true
+
+            });
+
+    </script>
     
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -127,9 +142,13 @@
                     if (!currentTable) {
                         currentTable = { start: index, end: index, rows: [] };
                     }
-                    const cells = trimmedLine.split('|')
-                        .map(cell => cell.trim())
-                        .filter(cell => cell !== '');
+                    // Split on pipe, preserve empty cells, trim each cell, and remove first/last if line starts/ends with pipe
+                    let cells = trimmedLine.split(/\|/);
+                    // Remove first if line starts with pipe
+                    if (cells.length && trimmedLine.startsWith('|')) cells = cells.slice(1);
+                    // Remove last if line ends with pipe
+                    if (cells.length && trimmedLine.endsWith('|')) cells = cells.slice(0, -1);
+                    cells = cells.map(cell => cell.trim());
                     currentTable.rows.push(cells);
                     currentTable.end = index;
                 } else {
@@ -219,9 +238,11 @@
                             }
                         }
                     }
-                    const cells = formattedLine.trim().split('|')
-                        .map(cell => cell.trim())
-                        .filter(cell => cell !== '');
+                    // Split on pipe, preserve empty cells, trim each cell, and remove first/last if line starts/ends with pipe
+                    let cells = formattedLine.trim().split(/\|/);
+                    if (cells.length && formattedLine.trim().startsWith('|')) cells = cells.slice(1);
+                    if (cells.length && formattedLine.trim().endsWith('|')) cells = cells.slice(0, -1);
+                    cells = cells.map(cell => cell.trim());
                     // Apply consistent padding based on current table's max column widths
                     const paddedCells = cells.map((cell, idx) => {
                         const width = currentTableBlock ? currentTableBlock.maxColumnWidths[idx] || 0 : cell.length;
@@ -286,9 +307,11 @@
                     if (!currentTable) {
                         currentTable = { start: index, end: index, rows: [] };
                     }
-                    const cells = trimmedLine.split('|')
-                        .map(cell => cell.trim())
-                        .filter(cell => cell !== '');
+                    // Split on pipe, preserve empty cells, trim each cell, and remove first/last if line starts/ends with pipe
+                    let cells = trimmedLine.split(/\|/);
+                    if (cells.length && trimmedLine.startsWith('|')) cells = cells.slice(1);
+                    if (cells.length && trimmedLine.endsWith('|')) cells = cells.slice(0, -1);
+                    cells = cells.map(cell => cell.trim());
                     currentTable.rows.push({ cells, lineIndex: index });
                     currentTable.end = index;
                 } else {
@@ -335,60 +358,28 @@
                     'Feature', 'Background', 'Scenario', 'Scenario Outline',
                     'Given', 'When', 'Then', 'And', 'But', '*', 'Examples'
                 ];
-                // Check for typos in tags and first word of other lines, for all lines except feature description
-                if (!inFeatureDescription) {
-                    if (trimmedLine.startsWith('@')) {
-                        // Check each tag
-                        const tags = trimmedLine.split(/\s+/);
-                        tags.forEach(tag => {
-                            // Remove leading @
-                            const tagWord = tag.replace(/^@/, '');
-                            // Only check if tagWord contains letters
-                            if (/^[A-Za-z*]+$/.test(tagWord)) {
-                                if (!reservedKeywords.includes(tagWord)) {
-                                    let closest = null;
-                                    let minDist = Infinity;
-                                    reservedKeywords.forEach(kw => {
-                                        const dist = levenshtein(tagWord.toLowerCase(), kw.toLowerCase());
-                                        if (dist < minDist) {
-                                            minDist = dist;
-                                            closest = kw;
-                                        }
-                                    });
-                                    if (minDist > 0 && minDist <= 2) {
-                                        found.push({
-                                            from: CodeMirror.Pos(i, trimmedLine.indexOf(tag)),
-                                            to: CodeMirror.Pos(i, trimmedLine.indexOf(tag) + tag.length),
-                                            message: `Possible typo in tag: '${tag}' (did you mean '@${closest}'?)`,
-                                            severity: "error"
-                                        });
-                                    }
+                // Check for typos only in first word of non-tag lines, for all lines except feature description
+                if (!inFeatureDescription && !trimmedLine.startsWith('@')) {
+                    const firstWordMatch = trimmedLine.match(/^([A-Za-z*]+)(:|\s)/);
+                    if (firstWordMatch) {
+                        const firstWord = firstWordMatch[1];
+                        if (!reservedKeywords.includes(firstWord)) {
+                            let closest = null;
+                            let minDist = Infinity;
+                            reservedKeywords.forEach(kw => {
+                                const dist = levenshtein(firstWord.toLowerCase(), kw.toLowerCase());
+                                if (dist < minDist) {
+                                    minDist = dist;
+                                    closest = kw;
                                 }
-                            }
-                        });
-                    } else {
-                        // Check first word of other lines
-                        const firstWordMatch = trimmedLine.match(/^([A-Za-z*]+)(:|\s)/);
-                        if (firstWordMatch) {
-                            const firstWord = firstWordMatch[1];
-                            if (!reservedKeywords.includes(firstWord)) {
-                                let closest = null;
-                                let minDist = Infinity;
-                                reservedKeywords.forEach(kw => {
-                                    const dist = levenshtein(firstWord.toLowerCase(), kw.toLowerCase());
-                                    if (dist < minDist) {
-                                        minDist = dist;
-                                        closest = kw;
-                                    }
+                            });
+                            if (minDist > 0 && minDist <= 2) {
+                                found.push({
+                                    from: CodeMirror.Pos(i, 0),
+                                    to: CodeMirror.Pos(i, line.length),
+                                    message: `Possible typo: '${firstWord}' (did you mean '${closest}'?)`,
+                                    severity: "error"
                                 });
-                                if (minDist > 0 && minDist <= 2) {
-                                    found.push({
-                                        from: CodeMirror.Pos(i, 0),
-                                        to: CodeMirror.Pos(i, line.length),
-                                        message: `Possible typo: '${firstWord}' (did you mean '${closest}'?)`,
-                                        severity: "error"
-                                    });
-                                }
                             }
                         }
                     }
@@ -455,20 +446,20 @@
 
                 // Check step order
                 const stepMatch = trimmedLine.match(/^(Given|When|Then|And|But|\*)\s/);
-                if (stepMatch) {
-                    const currentStep = stepMatch[1];
-                    if (currentStep === 'When' && lastStepType === 'Then') {
-                        found.push({
-                            from: CodeMirror.Pos(i, 0),
-                            to: CodeMirror.Pos(i, line.length),
-                            message: "When steps should come before Then steps",
-                            severity: "warning"
-                        });
-                    }
-                    if (currentStep !== 'And' && currentStep !== 'But') {
-                        lastStepType = currentStep;
-                    }
-                }
+                // if (stepMatch) {
+                //     const currentStep = stepMatch[1];
+                //     if (currentStep === 'When' && lastStepType === 'Then') {
+                //         found.push({
+                //             from: CodeMirror.Pos(i, 0),
+                //             to: CodeMirror.Pos(i, line.length),
+                //             message: "When steps should come before Then steps",
+                //             severity: "warning"
+                //         });
+                //     }
+                //     if (currentStep !== 'And' && currentStep !== 'But') {
+                //         lastStepType = currentStep;
+                //     }
+                // }
 
                 // Check for empty scenarios
                 if (trimmedLine.match(/^Scenario:|^Scenario Outline:/)) {
@@ -486,7 +477,11 @@
 
                 // Check table format (spacing)
                 if (trimmedLine.startsWith('|')) {
-                    const cells = trimmedLine.split('|').filter(cell => cell.trim());
+                    // Split on pipe, preserve empty cells, trim each cell, and remove first/last if line starts/ends with pipe
+                    let cells = trimmedLine.split(/\|/);
+                    if (cells.length && trimmedLine.startsWith('|')) cells = cells.slice(1);
+                    if (cells.length && trimmedLine.endsWith('|')) cells = cells.slice(0, -1);
+                    cells = cells.map(cell => cell.trim());
                     // Only flag cells with more than one leading space
                     if (!cells.every(cell => cell.length === 0 || cell[0] !== ' ' || (cell.length > 1 && cell[0] === ' ' && cell[1] !== ' '))) {
                         found.push({
